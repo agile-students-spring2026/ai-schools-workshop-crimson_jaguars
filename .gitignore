@@ -124,3 +124,13 @@ typings/
 ## Jekyll artifacts
 **/.jekyll-cache
 **/_site/
+
+## Project-specific ##
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+frontend/dist/
+backend/app/static/

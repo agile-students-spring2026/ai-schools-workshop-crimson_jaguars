@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: school-district-evaluator
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DEFAULT_YEAR
+        value: "2022"

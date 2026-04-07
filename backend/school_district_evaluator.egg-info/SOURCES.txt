@@ -1,0 +1,15 @@
+pyproject.toml
+app/__init__.py
+app/main.py
+app/scoring.py
+app/services.py
+app/states.py
+school_district_evaluator.egg-info/PKG-INFO
+school_district_evaluator.egg-info/SOURCES.txt
+school_district_evaluator.egg-info/dependency_links.txt
+school_district_evaluator.egg-info/requires.txt
+school_district_evaluator.egg-info/top_level.txt
+tests/test_main.py
+tests/test_scoring.py
+tests/test_services.py
+tests/test_states.py

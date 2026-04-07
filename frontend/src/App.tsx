@@ -7,6 +7,7 @@ import {
 } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import { ResultsPage } from "./pages/ResultsPage";
+import { ComparePage } from "./pages/ComparePage";
 import type { Audience, PresetKey, ScoredDistrict } from "./lib/types";
 
 const VALID_AUDIENCES: Audience[] = ["parent", "educator"];
@@ -52,8 +53,17 @@ function ResultsRoute() {
   );
 }
 
-function ComparePlaceholder() {
-  return <div style={{ padding: "2rem" }}>Compare page goes here.</div>;
+function CompareRoute() {
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
+
+  const a = params.get("a");
+  const b = params.get("b");
+
+  if (!a || !b) return <div className="p-8">Invalid comparison</div>;
+
+  // For now, return placeholder - will be populated by test or actual data
+  return <div className="p-8">Compare page loading...</div>;
 }
 
 export default function App() {
@@ -62,7 +72,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/results" element={<ResultsRoute />} />
-        <Route path="/compare" element={<ComparePlaceholder />} />
+        <Route path="/compare" element={<CompareRoute />} />
       </Routes>
     </BrowserRouter>
   );

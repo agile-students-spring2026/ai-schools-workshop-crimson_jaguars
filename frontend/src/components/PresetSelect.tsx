@@ -10,12 +10,15 @@ type Props = {
 export default function PresetSelect({ value, options, onChange }: Props) {
   return (
     <div>
-      <label htmlFor="preset" className="field-label">
+      <label
+        htmlFor="preset"
+        className="block text-xs uppercase tracking-wider text-gray-500 mb-2"
+      >
         Choose a priority preset
       </label>
       <select
         id="preset"
-        className="input"
+        className="w-full px-4 py-3 rounded-lg border border-gray-700 bg-gray-900/60 text-white text-base focus:outline-none focus:border-teal-400 transition-colors"
         value={value}
         onChange={(e) => onChange(e.target.value as PresetKey)}
       >

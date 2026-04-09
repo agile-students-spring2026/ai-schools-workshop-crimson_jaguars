@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ResultsPage } from "./ResultsPage";
+import { ResultsPage, computeToggleIds, resolveCompareDistricts } from "./ResultsPage";
 import { mockDistricts } from "../data/mockDistricts";
 import type { Audience, PresetKey } from "../lib/types";
 
@@ -100,38 +100,116 @@ describe("ResultsPage", () => {
     expect(screen.getByText(/new york districts/i)).toBeInTheDocument();
   });
 
-  it("allows selecting districts for comparison", async () => {
+  it("shows compare banner after selecting one district", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    const buttons = screen.getAllByRole("button");
-    const compareButtons = buttons.filter(
-      (btn) => !btn.textContent?.includes("Back") && !btn.textContent?.includes("Compare")
-    );
+    const [first] = screen.getAllByRole("button", { name: "Compare" });
+    await user.click(first);
 
-    if (compareButtons.length >= 2) {
-      await user.click(compareButtons[0]);
-      await user.click(compareButtons[1]);
-
-      expect(screen.getByText(/selected for comparison/i)).toBeInTheDocument();
-    }
+    expect(screen.getByText(/selected for comparison/i)).toBeInTheDocument();
+    expect(screen.getByText(/1\/2/)).toBeInTheDocument();
   });
 
-  it("shows compare button when selections made", async () => {
+  it("enables compare button after selecting two districts", async () => {
     const user = userEvent.setup();
     renderPage();
 
-    const buttons = screen.getAllByRole("button");
-    const compareButtons = buttons.filter(
-      (btn) => !btn.textContent?.includes("Back") && !btn.textContent?.includes("Compare")
-    );
+    const [first, second] = screen.getAllByRole("button", { name: "Compare" });
+    await user.click(first);
+    await user.click(second);
 
-    if (compareButtons.length >= 2) {
-      await user.click(compareButtons[0]);
-      await user.click(compareButtons[1]);
+    expect(screen.getByText(/2\/2/)).toBeInTheDocument();
+    const compareBarBtn = screen.getByRole("button", { name: "Compare →" });
+    expect(compareBarBtn).not.toBeDisabled();
+  });
 
-      const compareBtn = screen.getByRole("button", { name: /compare/i });
-      expect(compareBtn).toBeInTheDocument();
-    }
+  it("deselects a district when toggled again", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const [first] = screen.getAllByRole("button", { name: "Compare" });
+    await user.click(first);
+
+    const selectedBtn = screen.getByRole("button", { name: "Selected" });
+    await user.click(selectedBtn);
+
+    expect(screen.queryByText(/selected for comparison/i)).not.toBeInTheDocument();
+  });
+
+  it("does not allow selecting more than two districts", async () => {
+    const user = userEvent.setup();
+    renderPage();
+
+    const compareButtons = screen.getAllByRole("button", { name: "Compare" });
+    await user.click(compareButtons[0]);
+    await user.click(compareButtons[1]);
+
+    // Remaining un-selected district compare buttons should be disabled
+    const stillCompare = screen.getAllByRole("button", { name: "Compare" });
+    stillCompare.forEach((btn) => expect(btn).toBeDisabled());
+  });
+
+  it("calls onCompare with two districts when compare bar is clicked", async () => {
+    const user = userEvent.setup();
+    const { onCompare } = renderPage();
+
+    const [first, second] = screen.getAllByRole("button", { name: "Compare" });
+    await user.click(first);
+    await user.click(second);
+
+    const compareBarBtn = screen.getByRole("button", { name: "Compare →" });
+    await user.click(compareBarBtn);
+
+    expect(onCompare).toHaveBeenCalledTimes(1);
+    const [districts] = onCompare.mock.calls[0];
+    expect(districts).toHaveLength(2);
+  });
+
+  it("shows state abbreviation in header for states not in STATE_NAMES", () => {
+    renderPage("TX");
+    // TX is not in STATE_NAMES so stateLabel falls back to "TX"
+    expect(screen.getByText(/TX Districts/)).toBeInTheDocument();
+  });
+
+});
+
+describe("computeToggleIds", () => {
+  it("adds an id to an empty list", () => {
+    expect(computeToggleIds([], "a")).toEqual(["a"]);
+  });
+
+  it("adds an id to a list with one entry", () => {
+    expect(computeToggleIds(["a"], "b")).toEqual(["a", "b"]);
+  });
+
+  it("removes an id that is already in the list", () => {
+    expect(computeToggleIds(["a", "b"], "a")).toEqual(["b"]);
+  });
+
+  it("returns the same list unchanged when already at capacity of 2", () => {
+    const prev = ["a", "b"];
+    expect(computeToggleIds(prev, "c")).toBe(prev);
+  });
+});
+
+describe("resolveCompareDistricts", () => {
+  const [d1, d2] = mockDistricts;
+
+  it("returns null when fewer than 2 ids provided", () => {
+    expect(resolveCompareDistricts([d1.id], mockDistricts)).toBeNull();
+  });
+
+  it("returns null when 0 ids provided", () => {
+    expect(resolveCompareDistricts([], mockDistricts)).toBeNull();
+  });
+
+  it("returns a pair of districts when both ids are valid", () => {
+    const result = resolveCompareDistricts([d1.id, d2.id], mockDistricts);
+    expect(result).toEqual([d1, d2]);
+  });
+
+  it("returns null when one or both ids are not found", () => {
+    expect(resolveCompareDistricts(["unknown1", "unknown2"], mockDistricts)).toBeNull();
   });
 });

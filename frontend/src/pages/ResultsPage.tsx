@@ -3,6 +3,26 @@ import type { Audience, PresetKey, ScoredDistrict } from "../lib/types";
 import { mockDistricts } from "../data/mockDistricts";
 import { DistrictCard } from "../components/DistrictCard";
 
+/** Pure helper — exported for unit testing */
+export function computeToggleIds(prev: string[], id: string): string[] {
+  if (prev.includes(id)) return prev.filter((x) => x !== id);
+  if (prev.length >= 2) return prev;
+  return [...prev, id];
+}
+
+/** Pure helper — exported for unit testing */
+export function resolveCompareDistricts(
+  compareIds: string[],
+  districts: ScoredDistrict[],
+): [ScoredDistrict, ScoredDistrict] | null {
+  if (compareIds.length !== 2) return null;
+  const [a, b] = compareIds
+    .map((id) => districts.find((d) => d.id === id))
+    .filter((d): d is ScoredDistrict => Boolean(d));
+  if (a && b) return [a, b];
+  return null;
+}
+
 type ResultsPageProps = {
   state: string;
   audience: Audience;
@@ -47,19 +67,12 @@ export function ResultsPage({
   );
 
   const toggleCompare = (id: string) => {
-    setCompareIds((prev) => {
-      if (prev.includes(id)) return prev.filter((x) => x !== id);
-      if (prev.length >= 2) return prev;
-      return [...prev, id];
-    });
+    setCompareIds((prev) => computeToggleIds(prev, id));
   };
 
   const handleCompareClick = () => {
-    if (compareIds.length !== 2) return;
-    const [a, b] = compareIds
-      .map((id) => districts.find((d) => d.id === id))
-      .filter((d): d is ScoredDistrict => Boolean(d));
-    if (a && b) onCompare([a, b]);
+    const pair = resolveCompareDistricts(compareIds, districts);
+    if (pair) onCompare(pair);
   };
 
   const stateLabel = STATE_NAMES[state] ?? state;

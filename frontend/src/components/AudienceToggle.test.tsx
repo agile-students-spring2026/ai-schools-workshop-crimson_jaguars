@@ -37,4 +37,23 @@ describe("AudienceToggle", () => {
 
     expect(screen.getByText(/who are you evaluating for/i)).toBeInTheDocument();
   });
+
+  it("calls onChange with 'parent' when parent button is clicked", async () => {
+    const user = userEvent.setup();
+    const handleChange = vi.fn();
+    render(<AudienceToggle value="educator" onChange={handleChange} />);
+
+    const parentBtn = screen.getByRole("button", { name: /parent/i });
+    await user.click(parentBtn);
+
+    expect(handleChange).toHaveBeenCalledWith("parent");
+  });
+
+  it("highlights educator button when value is educator", () => {
+    const handleChange = vi.fn();
+    render(<AudienceToggle value="educator" onChange={handleChange} />);
+
+    const educatorBtn = screen.getByRole("button", { name: /educator/i });
+    expect(educatorBtn).toHaveClass("active");
+  });
 });
